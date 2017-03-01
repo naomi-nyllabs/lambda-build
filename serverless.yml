@@ -20,67 +20,163 @@ service: lambda-build
 provider:
   name: aws
   runtime: nodejs4.3
+  region: us-east-1
+  stage: ${opt:stage, self:custom.defaultStage}
+  profile: ${self:custom.profiles.${self:provider.stage}}
+  # you can define service wide environment variables here
+  # NOTE: ACCESS THESE VARIABLES BY USING process.env.DYNAMO_TABLENAME in the lambda
+  environment:
+    DYNAMODB_TABLE: INS_20_USER_REQUEST
 
-# you can overwrite defaults here
-#  stage: dev
-#  region: us-east-1
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+  #    - Effect: "Allow"
+  #      Action:
+  #        - "s3:ListBucket"
+  #      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
     - Effect: "Allow"
       Action:
         - "s3:*"
-      Resource: ["arn:aws:s3:::customer-service-s3", "arn:aws:s3:::customer-service-full-web-module"]
+      Resource: "arn:aws:s3:::customer-service-full-web-module"
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+      Resource: "arn:aws:dynamodb:us-east-1:164336801877:table/INS_20_USER_REQUEST"
 
-# you can define service wide environment variables here
-#  environment:
-#    variable1: value1
+custom:
+  defaultStage: dev
+  profiles:
+    dev: devProfile
+    stag: stagProfile
+
+##-----------------------------------------Packaging--------------------------------------------------------------------
 
 # you can add packaging information here
 package:
-  include:
+  individually: true
+#  include:
 #    - include-me.js
+#    - include-me-dir/**
+  exclude:
     - node_modules/**
-#  exclude:
-#    - exclude-me.js
 #    - exclude-me-dir/**
 
-functions:
-  buildPOC:
-    handler: handler.buildPOC
+##-----------------------------------------End of Packaging-------------------------------------------------------------
 
+functions:
+  requests:
+    handler: get.requests
+    role: demoRole
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
     events:
-#      - http:
-#          path: users/create
-#          method: get
-      - s3:
-        bucket: customer-service-full-web-module
+      - http:
+          path: requests/get
+          method: get
+          cors: true
+#      - s3:
+#        bucket: customer-service-full-web-module
 #      - schedule: rate(10 minutes)
 #      - sns: greeter-topic
 #      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
 #      - alexaSkill
 #      - iot:
 #          sql: "SELECT * FROM 'some_topic'"
-
+  sample:
+      handler: sample.sample
+      role: demoRole1
+      package:
+        include:
+          - /node_modules/serverless-offline/**
+      events:
+        - http:
+            path: demo/sample
+            method: get
+            cors: true
 #    Define function environment variables here
 #    environment:
 #      variable2: value2
 
+##-----------------------------------------Resources--------------------------------------------------------------------
+
 # you can add CloudFormation resource templates here
 #resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+resources:
+  Resources:
+    demoRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: demoRole
+        AssumeRolePolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        # note that these rights are needed if you want your function to be able to communicate with resources within your vpc
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        Policies:
+          - PolicyName: demoPolicy
+            PolicyDocument:
+              Statement:
+                -  Effect: "Allow"
+                   Action:
+                     - "dynamodb:*"
+                   Resource: ["arn:aws:dynamodb:us-east-1:164336801877:table/INS_20_USER_REQUEST"]
+
+    demoRole1:
+       Type: AWS::IAM::Role
+       Properties:
+         Path: /
+         RoleName: demoRole1
+         AssumeRolePolicyDocument:
+           Statement:
+             - Effect: Allow
+               Principal:
+                 Service:
+                   - lambda.amazonaws.com
+               Action: sts:AssumeRole
+         # note that these rights are needed if you want your function to be able to communicate with resources within your vpc
+         ManagedPolicyArns:
+           - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+
+    LoggingPermissionPolicy:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: LoggingPermission
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: arn:aws:logs:us-east-1:164336801877:log-group:/aws/lambda/*:*:*
+        Roles:
+          - Ref: 'demoRole'
+          - Ref: 'demoRole1'
+
+    S3PutPolicy:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: S3PutPolicy
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Action:
+                - "s3:PutObject"
+              Resource:
+               Fn::Join:
+                 - ""
+                 - - "arn:aws:s3:::"
+                   - "Ref" : "ServerlessDeploymentBucket"
+        Roles:
+          - Ref: 'demoRole'
+          - Ref: 'demoRole1'
+
+##-----------------------------------------End of Resources-------------------------------------------------------------
