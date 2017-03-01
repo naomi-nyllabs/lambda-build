@@ -5,6 +5,7 @@ var docClient = new AWS.DynamoDB.DocumentClient();
 
 
 module.exports.sample = (event, context, callback) => {
+    var sls_offline = require('serverless-offline');
     const response = {
         statusCode: 200,
         headers: {

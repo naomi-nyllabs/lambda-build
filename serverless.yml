@@ -10,13 +10,18 @@
 #    docs.serverless.com
 #
 # Happy Coding!
-
-service: lambda-build
+##-----------------------------------------Start of Service-------------------------------------------------------------
+service: sls-demo
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
+##-----------------------------------------End of Service---------------------------------------------------------------
+
+
+
+##-----------------------------------------Start of Provider------------------------------------------------------------
 provider:
   name: aws
   runtime: nodejs4.3
@@ -30,19 +35,24 @@ provider:
 
 
 # you can add statements to the Lambda function's IAM Role here
-  iamRoleStatements:
-  #    - Effect: "Allow"
-  #      Action:
-  #        - "s3:ListBucket"
-  #      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-    - Effect: "Allow"
-      Action:
-        - "s3:*"
-      Resource: "arn:aws:s3:::customer-service-full-web-module"
-    - Effect: "Allow"
-      Action:
-        - "dynamodb:*"
-      Resource: "arn:aws:dynamodb:us-east-1:164336801877:table/INS_20_USER_REQUEST"
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:*"
+#      Resource: "arn:aws:s3:::customer-service-full-web-module"
+#    - Effect: "Allow"
+#      Action:
+#        - "dynamodb:*"
+#      Resource: "arn:aws:dynamodb:us-east-1:164336801877:table/INS_20_USER_REQUEST"
+
+##-----------------------------------------End of Provider--------------------------------------------------------------
+
+
+##-----------------------------------------Start of Custom--------------------------------------------------------------
 
 custom:
   defaultStage: dev
@@ -50,7 +60,10 @@ custom:
     dev: devProfile
     stag: stagProfile
 
-##-----------------------------------------Packaging--------------------------------------------------------------------
+##-----------------------------------------End of Custom----------------------------------------------------------------
+
+
+##-----------------------------------------Start of Packaging-----------------------------------------------------------
 
 # you can add packaging information here
 package:
@@ -60,9 +73,19 @@ package:
 #    - include-me-dir/**
   exclude:
     - node_modules/**
-#    - exclude-me-dir/**
 
 ##-----------------------------------------End of Packaging-------------------------------------------------------------
+
+
+##-----------------------------------------Start of Plugins-------------------------------------------------------------
+plugins:
+  - serverless-plugin-include-dependencies
+
+##-----------------------------------------Start of Plugins-------------------------------------------------------------
+
+
+
+##-----------------------------------------Start of Functions-----------------------------------------------------------
 
 functions:
   requests:
@@ -87,9 +110,6 @@ functions:
   sample:
       handler: sample.sample
       role: demoRole1
-      package:
-        include:
-          - /node_modules/serverless-offline/**
       events:
         - http:
             path: demo/sample
@@ -99,7 +119,12 @@ functions:
 #    environment:
 #      variable2: value2
 
-##-----------------------------------------Resources--------------------------------------------------------------------
+
+##-----------------------------------------End of Functions-------------------------------------------------------------
+
+
+
+##-----------------------------------------Start of R-------------------------------------------------------------------
 
 # you can add CloudFormation resource templates here
 #resources:
