@@ -115,6 +115,12 @@ functions:
             path: demo/sample
             method: get
             cors: true
+            integration: lambda
+            authorizer:
+              name: authorizer
+              arn: arn:aws:cognito-idp:us-east-1:164336801877:userpool/us-east-1_z6m8QUoCq
+              claims:
+                - email
 #    Define function environment variables here
 #    environment:
 #      variable2: value2
@@ -124,7 +130,7 @@ functions:
 
 
 
-##-----------------------------------------Start of R-------------------------------------------------------------------
+##-----------------------------------------Start of Resources-------------------------------------------------------------------
 
 # you can add CloudFormation resource templates here
 #resources:

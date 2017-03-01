@@ -11,7 +11,7 @@ var docClient = new AWS.DynamoDB.DocumentClient();
 
 module.exports.requests = function(event, context, callback) {
     console.log(event);
-    console.log(process.env);
+    // console.log(process.env);
     var params = {
         TableName : process.env.DYNAMODB_TABLE,
         FilterExpression: "#stat = :status",
